@@ -136,6 +136,59 @@ const SimpleVisualizerPage: React.FC = () => {
     setCurrentStep(0);
     setIsPlaying(false);
   };
+        comparing: [],
+        sorted: Array.from({ length: i + 1 }, (_, idx) => n - 1 - idx),
+        description: `Position ${n - 1 - i} is now sorted`
+      });
+    }
+    
+    // Final sorted state
+    steps.push({
+      array: [...arr],
+      comparing: [],
+      sorted: Array.from({ length: n }, (_, idx) => idx),
+      description: 'Array is fully sorted!'
+    });
+    
+    return steps;
+  };
+
+  const [steps, setSteps] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (currentAlgorithm?.name.toLowerCase().includes('bubble')) {
+      setSteps(bubbleSortSteps());
+    }
+  }, [array, currentAlgorithm]);
+
+  useEffect(() => {
+    if (steps.length > 0 && currentStep < steps.length) {
+      const step = steps[currentStep];
+      setComparing(step.comparing || []);
+      setSorted(step.sorted || []);
+      setSwapping(step.swapping || []);
+    }
+  }, [currentStep, steps]);
+
+  useEffect(() => {
+    if (isPlaying && currentStep < steps.length - 1) {
+      const timer = setTimeout(() => {
+        setCurrentStep(prev => prev + 1);
+      }, speed);
+      return () => clearTimeout(timer);
+    } else if (isPlaying && currentStep >= steps.length - 1) {
+      setIsPlaying(false);
+    }
+  }, [isPlaying, currentStep, steps, speed]);
+
+  const generateRandomArray = () => {
+    const newArray = Array.from({ length: 10 }, () => 
+      Math.floor(Math.random() * 100) + 1
+    );
+    setArray(newArray);
+    setCurrentStep(0);
+    setIsPlaying(false);
+  };
 
   const handlePlay = () => {
     if (currentStep >= steps.length - 1) {

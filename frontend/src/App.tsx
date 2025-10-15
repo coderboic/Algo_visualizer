@@ -4,8 +4,14 @@ import TestPage from './components/TestPage';
 import SimpleHomePage from './components/SimpleHomePage';
 import AlgorithmsPage from './components/AlgorithmsPage';
 import SimpleHeader from './components/SimpleHeader';
-import SimpleVisualizerPage from './pages/SimpleVisualizerPage';
+import VisualizerRouter from './pages/VisualizerRouter';
 import PlaygroundPage from './pages/PlaygroundPage';
+import AlgorithmLearnPage from './pages/AlgorithmLearnPage';
+import ArrayVisualizer from './components/Visualizers/ArrayVisualizer';
+import StackVisualizer from './components/Visualizers/StackVisualizer';
+import QueueVisualizer from './components/Visualizers/QueueVisualizer';
+import LinkedListVisualizer from './components/Visualizers/LinkedListVisualizer';
+import SearchingVisualizer from './components/Visualizers/SearchingVisualizer';
 import { useAppDispatch } from './store/hooks';
 import { setTheme } from './store/slices/uiSlice';
 
@@ -47,8 +53,24 @@ function App() {
           <Route path="/" element={<SimpleHomePage />} />
           <Route path="/algorithms" element={<AlgorithmsPage />} />
           <Route path="/algorithms/:category" element={<AlgorithmsPage />} />
-          <Route path="/visualizer/:algorithmId" element={<SimpleVisualizerPage />} />
-          <Route path="/algorithm/:algorithmId" element={<SimpleVisualizerPage />} />
+          
+          {/* Learn Routes - Documentation Pages */}
+          <Route path="/learn/:algorithmId" element={<AlgorithmLearnPage />} />
+          <Route path="/algorithm/:algorithmId" element={<AlgorithmLearnPage />} />
+          
+          {/* Data Structure Routes */}
+          <Route path="/visualizer/array" element={<ArrayVisualizer />} />
+          <Route path="/visualizer/stack" element={<StackVisualizer />} />
+          <Route path="/visualizer/queue" element={<QueueVisualizer />} />
+          <Route path="/visualizer/linked-list" element={<LinkedListVisualizer />} />
+          
+          {/* Search Algorithm Routes */}
+          <Route path="/visualizer/linear-search" element={<SearchingVisualizer />} />
+          <Route path="/visualizer/binary-search" element={<SearchingVisualizer />} />
+          <Route path="/visualizer/searching" element={<SearchingVisualizer />} />
+          
+          {/* General Routes */}
+          <Route path="/visualizer/:algorithmId" element={<VisualizerRouter />} />
           <Route path="/playground" element={<PlaygroundPage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<SimpleHomePage />} />

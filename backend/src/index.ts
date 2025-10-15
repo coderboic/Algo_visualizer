@@ -1,18 +1,22 @@
+import dotenv from 'dotenv';
+
+// Load environment variables FIRST before importing anything else
+dotenv.config();
+
 import express, { Application } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import algorithmRoutes from './routes/algorithm.routes';
 import executionRoutes from './routes/execution.routes';
 import visualizationRoutes from './routes/visualization.routes';
+import comprehensiveExecutionRoutes from './routes/execution.comprehensive.routes';
+import playgroundRoutes from './routes/playground.routes';
 import socketManager from './websocket/socketManager';
 
-// Load environment variables
-dotenv.config();
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -49,7 +53,9 @@ app.get('/health', (_req, res) => {
 // API Routes
 app.use('/api/algorithms', algorithmRoutes);
 app.use('/api/execute', executionRoutes);
+app.use('/api/execute', comprehensiveExecutionRoutes);
 app.use('/api/visualize', visualizationRoutes);
+app.use('/api/playground', playgroundRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

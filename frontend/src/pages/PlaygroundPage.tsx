@@ -5,239 +5,195 @@ import {
   Play,
   Terminal,
   Code2,
-  Users,
-  Share2,
-  Check,
+  Sparkles,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Copy,
+  Download,
 } from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { setCustomCode, setLanguage, executeAlgorithm } from '../store/slices/executionSlice';
-import { io, Socket } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
-interface TestCase {
-  id: string;
-  input: string;
-  expectedOutput: string;
-  actualOutput?: string;
-  passed?: boolean;
-}
-
 const PlaygroundPage: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { customCode, language, isExecuting } = useAppSelector((state) => state.execution);
-  const { theme } = useAppSelector((state) => state.ui);
-  
-  const [code, setCode] = useState(customCode || getDefaultCode(language));
+  const [code, setCode] = useState(getDefaultCode('javascript'));
+  const [language, setLanguage] = useState('javascript');
   const [output, setOutput] = useState('');
-  const [testCases, setTestCases] = useState<TestCase[]>([
-    {
-      id: '1',
-      input: '[5, 2, 8, 1, 9]',
-      expectedOutput: '[1, 2, 5, 8, 9]',
-    },
-  ]);
-  const [activeTab, setActiveTab] = useState<'code' | 'output' | 'test'>('code');
-  const [isCollaborative, setIsCollaborative] = useState(false);
-  const [roomId, setRoomId] = useState('');
-  const [collaborators, setCollaborators] = useState<any[]>([]);
-  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'output' | 'error'>('output');
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    fixedCode: string;
+    explanation: string;
+    changes: string[];
+  } | null>(null);
   
-  const socketRef = useRef<Socket | null>(null);
   const editorRef = useRef<any>(null);
 
-  // Initialize socket connection for collaborative editing
-  useEffect(() => {
-    if (isCollaborative && roomId) {
-      socketRef.current = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000');
-      
-      socketRef.current.emit('join-room', {
-        roomId,
-        userId: 'user-' + Math.random().toString(36).substr(2, 9),
-        username: 'Anonymous',
-      });
-
-      socketRef.current.on('code-update', (data) => {
-        if (editorRef.current) {
-          setCode(data.code);
-        }
-      });
-
-      socketRef.current.on('user-joined', (data) => {
-        toast.success(`${data.username} joined the session`);
-        setCollaborators(prev => [...prev, data]);
-      });
-
-      socketRef.current.on('user-left', (data) => {
-        toast(`${data.username} left the session`);
-        setCollaborators(prev => prev.filter(c => c.userId !== data.userId));
-      });
-
-      return () => {
-        socketRef.current?.emit('leave-room', roomId);
-        socketRef.current?.disconnect();
-      };
-    }
-  }, [isCollaborative, roomId]);
-
   const handleCodeChange = (value: string | undefined) => {
-    const newCode = value || '';
-    setCode(newCode);
-    dispatch(setCustomCode(newCode));
-
-    // Broadcast code changes in collaborative mode
-    if (isCollaborative && socketRef.current) {
-      socketRef.current.emit('code-change', {
-        roomId,
-        code: newCode,
-        changes: null,
-      });
-    }
+    setCode(value || '');
+    setAiSuggestion(null); // Clear AI suggestions when code changes
   };
 
   const handleRunCode = async () => {
     setActiveTab('output');
-    setOutput('Running code...\n');
+    setOutput('Executing code...\n');
+    setError('');
+    setIsExecuting(true);
 
     try {
-      // Simulate code execution (in real app, this would call the backend)
-      const result = await dispatch(
-        executeAlgorithm({
-          algorithmId: 'custom',
-          input: testCases[0]?.input || '[]',
-          customCode: code,
-        })
-      ).unwrap();
+      const response = await fetch('http://localhost:5000/api/playground/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          language,
+          input: '',
+        }),
+      });
 
-      setOutput(JSON.stringify(result, null, 2));
+      const result = await response.json();
 
-      // Broadcast execution result in collaborative mode
-      if (isCollaborative && socketRef.current) {
-        socketRef.current.emit('code-result', {
-          roomId,
-          result,
-        });
+      if (result.error) {
+        setError(result.error);
+        setOutput('');
+        setActiveTab('error');
+        toast.error('Code execution failed');
+      } else {
+        setOutput(result.output || 'Program completed successfully');
+        setError('');
+        toast.success(`Executed in ${result.executionTime}ms`);
       }
-    } catch (error: any) {
-      setOutput(`Error: ${error.message}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to execute code');
+      setActiveTab('error');
+      toast.error('Execution failed');
+    } finally {
+      setIsExecuting(false);
     }
   };
 
-  const handleRunTests = () => {
-    setActiveTab('test');
-    // Run test cases
-    testCases.forEach((testCase) => {
-      // Simulate test execution
-      testCase.actualOutput = '[1, 2, 5, 8, 9]'; // This would come from actual execution
-      testCase.passed = testCase.actualOutput === testCase.expectedOutput;
-    });
-    setTestCases([...testCases]);
+  const handleFixWithAI = async () => {
+    if (!error && !code.trim()) {
+      toast.error('No code to fix');
+      return;
+    }
+
+    setIsFixing(true);
+    toast.loading('AI is analyzing your code...', { id: 'ai-fix' });
+
+    try {
+      const response = await fetch('http://localhost:5000/api/playground/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          language,
+          error: error || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.error) {
+        toast.error(result.error, { id: 'ai-fix' });
+      } else {
+        setAiSuggestion(result);
+        toast.success('AI has analyzed your code!', { id: 'ai-fix' });
+      }
+    } catch (err: any) {
+      toast.error('AI fix failed: ' + err.message, { id: 'ai-fix' });
+    } finally {
+      setIsFixing(false);
+    }
   };
 
-  const handleStartCollaboration = () => {
-    const newRoomId = 'room-' + Math.random().toString(36).substr(2, 9);
-    setRoomId(newRoomId);
-    setIsCollaborative(true);
-    toast.success('Collaborative session started!');
+  const handleApplyFix = () => {
+    if (aiSuggestion) {
+      setCode(aiSuggestion.fixedCode);
+      setAiSuggestion(null);
+      toast.success('AI fix applied!');
+    }
   };
 
-  const handleCopyRoomLink = () => {
-    const link = `${window.location.origin}/playground?room=${roomId}`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast.success('Room link copied to clipboard!');
-  };
-
-  const handleLanguageChange = (newLanguage: any) => {
-    dispatch(setLanguage(newLanguage));
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
     setCode(getDefaultCode(newLanguage));
+    setOutput('');
+    setError('');
+    setAiSuggestion(null);
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code copied to clipboard');
+  };
+
+  const handleDownloadCode = () => {
+    const extensions: Record<string, string> = {
+      javascript: 'js',
+      python: 'py',
+      java: 'java',
+      cpp: 'cpp',
+      typescript: 'ts',
+    };
+    
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `code.${extensions[language] || 'txt'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Code downloaded');
   };
 
   function getDefaultCode(lang: string) {
     const templates: Record<string, string> = {
-      javascript: `// JavaScript Solution
-function bubbleSort(arr) {
-  const n = arr.length;
-  for (let i = 0; i < n - 1; i++) {
-    for (let j = 0; j < n - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        // Swap elements
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-      }
-    }
-  }
-  return arr;
+      javascript: `// JavaScript Code
+function greet(name) {
+  return "Hello, " + name + "!";
 }
 
-// Test the function
-const input = [5, 2, 8, 1, 9];
-console.log(bubbleSort(input));`,
+console.log(greet("World"));`,
       
-      python: `# Python Solution
-def bubble_sort(arr):
-    n = len(arr)
-    for i in range(n - 1):
-        for j in range(n - i - 1):
-            if arr[j] > arr[j + 1]:
-                # Swap elements
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-    return arr
+      python: `# Python Code
+def greet(name):
+    return f"Hello, {name}!"
 
-# Test the function
-input_arr = [5, 2, 8, 1, 9]
-print(bubble_sort(input_arr))`,
+print(greet("World"))`,
       
-      java: `// Java Solution
-import java.util.Arrays;
-
-public class BubbleSort {
-    public static void bubbleSort(int[] arr) {
-        int n = arr.length;
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = 0; j < n - i - 1; j++) {
-                if (arr[j] > arr[j + 1]) {
-                    // Swap elements
-                    int temp = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = temp;
-                }
-            }
-        }
+      java: `// Java Code
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(greet("World"));
     }
     
-    public static void main(String[] args) {
-        int[] input = {5, 2, 8, 1, 9};
-        bubbleSort(input);
-        System.out.println(Arrays.toString(input));
+    public static String greet(String name) {
+        return "Hello, " + name + "!";
     }
 }`,
       
-      cpp: `// C++ Solution
+      cpp: `// C++ Code
 #include <iostream>
-#include <vector>
+#include <string>
 using namespace std;
 
-void bubbleSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (arr[j] > arr[j + 1]) {
-                // Swap elements
-                swap(arr[j], arr[j + 1]);
-            }
-        }
-    }
+string greet(string name) {
+    return "Hello, " + name + "!";
 }
 
 int main() {
-    vector<int> input = {5, 2, 8, 1, 9};
-    bubbleSort(input);
-    
-    for (int num : input) {
-        cout << num << " ";
-    }
+    cout << greet("World") << endl;
     return 0;
 }`,
+
+      typescript: `// TypeScript Code
+function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+
+console.log(greet("World"));`,
     };
     
     return templates[lang] || templates.javascript;
@@ -248,7 +204,7 @@ int main() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="h-[calc(100vh-128px)] flex flex-col"
+      className="h-[calc(100vh-128px)] flex flex-col bg-gray-50 dark:bg-gray-900"
     >
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
@@ -262,78 +218,103 @@ int main() {
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
               <option value="cpp">C++</option>
+              <option value="typescript">TypeScript</option>
             </select>
           </div>
 
           <div className="flex items-center space-x-2">
-            {!isCollaborative ? (
-              <button
-                onClick={handleStartCollaboration}
-                className="px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Start Collaboration
-              </button>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Room: {roomId}
-                </span>
-                <button
-                  onClick={handleCopyRoomLink}
-                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                </button>
-                {collaborators.length > 0 && (
-                  <div className="flex -space-x-2">
-                    {collaborators.slice(0, 3).map((collab, i) => (
-                      <div
-                        key={i}
-                        className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white dark:border-gray-800"
-                        title={collab.username}
-                      >
-                        {collab.username.charAt(0).toUpperCase()}
-                      </div>
-                    ))}
-                    {collaborators.length > 3 && (
-                      <div className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white dark:border-gray-800">
-                        +{collaborators.length - 3}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+            <button
+              onClick={handleCopyCode}
+              className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+              title="Copy Code"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={handleDownloadCode}
+              className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+              title="Download Code"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={handleFixWithAI}
+              disabled={isFixing}
+              className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center"
+            >
+              {isFixing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              AI Fix
+            </button>
 
             <button
               onClick={handleRunCode}
               disabled={isExecuting}
-              className="px-4 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
+              className="px-4 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
             >
-              <Play className="mr-2 h-4 w-4" />
-              Run
-            </button>
-
-            <button
-              onClick={handleRunTests}
-              className="px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-            >
-              <Terminal className="mr-2 h-4 w-4" />
-              Run Tests
+              {isExecuting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="mr-2 h-4 w-4" />
+              )}
+              Run Code
             </button>
           </div>
         </div>
       </div>
 
+      {/* AI Suggestion Banner */}
+      {aiSuggestion && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-b border-purple-200 dark:border-purple-800 px-4 py-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center mb-2">
+                <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">AI Code Suggestion</h3>
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{aiSuggestion.explanation}</p>
+              {aiSuggestion.changes.length > 0 && (
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  {aiSuggestion.changes.map((change, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      {change}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="flex space-x-2 ml-4">
+              <button
+                onClick={handleApplyFix}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium"
+              >
+                Apply Fix
+              </button>
+              <button
+                onClick={() => setAiSuggestion(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-medium"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Editor Panel */}
         <div className="flex-1 flex flex-col">
           <Editor
@@ -341,7 +322,7 @@ int main() {
             language={language}
             value={code}
             onChange={handleCodeChange}
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            theme="vs-dark"
             options={{
               minimap: { enabled: false },
               fontSize: 14,
@@ -350,6 +331,7 @@ int main() {
               scrollBeyondLastLine: false,
               automaticLayout: true,
               tabSize: 2,
+              padding: { top: 16 },
             }}
             onMount={(editor) => {
               editorRef.current = editor;
@@ -358,88 +340,80 @@ int main() {
         </div>
 
         {/* Output Panel */}
-        <div className="w-1/3 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="w-2/5 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800">
           {/* Tabs */}
           <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab('output')}
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`px-4 py-2.5 text-sm font-medium flex items-center ${
                 activeTab === 'output'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
+              <Terminal className="h-4 w-4 mr-2" />
               Output
             </button>
             <button
-              onClick={() => setActiveTab('test')}
-              className={`px-4 py-2 text-sm font-medium ${
-                activeTab === 'test'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400'
+              onClick={() => setActiveTab('error')}
+              className={`px-4 py-2.5 text-sm font-medium flex items-center ${
+                activeTab === 'error'
+                  ? 'text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
-              Test Cases
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Errors
+              {error && <span className="ml-2 px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs rounded-full">1</span>}
             </button>
           </div>
 
           {/* Tab Content */}
           <div className="flex-1 overflow-auto p-4">
             {activeTab === 'output' && (
-              <pre className="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                {output || 'Run your code to see output here...'}
-              </pre>
+              <div>
+                {output ? (
+                  <pre className="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                    {output}
+                  </pre>
+                ) : (
+                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                    <Terminal className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Run your code to see output here</p>
+                  </div>
+                )}
+              </div>
             )}
 
-            {activeTab === 'test' && (
-              <div className="space-y-4">
-                {testCases.map((testCase) => (
-                  <div
-                    key={testCase.id}
-                    className={`p-3 rounded-lg border ${
-                      testCase.passed === undefined
-                        ? 'border-gray-300 dark:border-gray-600'
-                        : testCase.passed
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Test Case #{testCase.id}
-                      </span>
-                      {testCase.passed !== undefined && (
-                        <span
-                          className={`text-sm font-medium ${
-                            testCase.passed ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {testCase.passed ? 'Passed' : 'Failed'}
-                        </span>
-                      )}
+            {activeTab === 'error' && (
+              <div>
+                {error ? (
+                  <div className="space-y-3">
+                    <div className="flex items-start p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-3 mt-0.5 flex-shrink-0" />
+                      <pre className="text-sm font-mono text-red-700 dark:text-red-300 whitespace-pre-wrap flex-1">
+                        {error}
+                      </pre>
                     </div>
-                    <div className="space-y-1 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Input: </span>
-                        <code className="text-gray-800 dark:text-gray-200">{testCase.input}</code>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Expected: </span>
-                        <code className="text-gray-800 dark:text-gray-200">
-                          {testCase.expectedOutput}
-                        </code>
-                      </div>
-                      {testCase.actualOutput && (
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">Actual: </span>
-                          <code className="text-gray-800 dark:text-gray-200">
-                            {testCase.actualOutput}
-                          </code>
-                        </div>
+                    <button
+                      onClick={handleFixWithAI}
+                      disabled={isFixing}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center justify-center"
+                    >
+                      {isFixing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
                       )}
-                    </div>
+                      Fix with AI
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No errors found</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

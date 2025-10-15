@@ -24,12 +24,24 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment files
+# Environment files - NEVER commit these!
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
+!.env.example
+backend/.env
+frontend/.env
+
+# API Keys and Secrets - NEVER commit these!
+**/GEMINI_API_KEY*
+**/API_KEY*
+**/SECRET_KEY*
+*.key
+*.pem
+*.cert
 
 # Build directories
 /dist
@@ -126,3 +138,20 @@ venv.bak/
 # Temporary folders
 tmp/
 temp/
+
+# Personal notes and local files
+*.local.*
+notes.md
+todo.txt
+scratch/
+
+# Test files that may contain sensitive data
+test-*.sh
+test-*.json
+test-*.js
+!test-*.spec.js
+!test-*.test.js
+
+# Shell scripts that may contain credentials
+*-key.sh
+setup-*-key.sh
