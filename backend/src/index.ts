@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 // Load environment variables FIRST before importing anything else
 dotenv.config();
 
-import express, { Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -66,7 +66,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoints (both root and /api for flexibility)
-app.get('/health', (_req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     message: 'API is running',
@@ -76,7 +76,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     message: 'API is running',
