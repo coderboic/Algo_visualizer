@@ -3,15 +3,15 @@ import { lazy, Suspense } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import LoadingScreen from '../components/common/LoadingScreen';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 // Lazy load pages for better performance
 const HomePage = lazy(() => import('../pages/HomePage'));
 const PlaygroundPage = lazy(() => import('../pages/PlaygroundPage'));
 const VisualizerPage = lazy(() => import('../pages/VisualizerPage'));
 const TutorialsPage = lazy(() => import('../pages/TutorialsPage'));
-const LoginPage = lazy(() => import('../pages/LoginPage'));
-const RegisterPage = lazy(() => import('../pages/RegisterPage'));
+const AuthLoginPage = lazy(() => import('../pages/AuthLoginPage'));
+const AuthSignupPage = lazy(() => import('../pages/AuthSignupPage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const AlgorithmDetailPage = lazy(() => import('../pages/AlgorithmDetailPage'));
@@ -34,18 +34,17 @@ const AppRoutes = () => {
 
         {/* Auth routes */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<AuthLoginPage />} />
+          <Route path="/signup" element={<AuthSignupPage />} />
+          <Route path="/register" element={<Navigate to="/signup" replace />} />
         </Route>
 
         {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-            <Route path="/playground" element={<PlaygroundPage />} />
-            <Route path="/playground/:algorithmId" element={<PlaygroundPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
+        <Route element={<MainLayout />}>
+          <Route element={<ProtectedRoute><PlaygroundPage /></ProtectedRoute>} path="/playground" />
+          <Route element={<ProtectedRoute><PlaygroundPage /></ProtectedRoute>} path="/playground/:algorithmId" />
+          <Route element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} path="/profile" />
+          <Route element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} path="/settings" />
         </Route>
 
         {/* Fallback routes */}

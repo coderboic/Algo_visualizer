@@ -50,7 +50,7 @@ const SimpleHomePage = () => {
         </svg>
       ),
       title: 'Code Playground',
-      description: 'Write, test, and visualize your own implementations',
+      description: 'Write, test, and visualize your own implementations with AI-powered code fixing',
       color: 'from-orange-500 to-red-500'
     }
   ];
@@ -75,9 +75,9 @@ const SimpleHomePage = () => {
                 <br />
                 <span className="text-gray-800 dark:text-white">Through Visualization</span>
               </h1>
-              
+
               <p className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-                Experience algorithms come to life with interactive visualizations, 
+                Experience algorithms come to life with interactive visualizations,
                 real-time animations, and comprehensive explanations.
               </p>
 
@@ -187,7 +187,7 @@ const SimpleHomePage = () => {
                     {category.algorithms.length} algorithms
                   </span>
                 </div>
-                
+
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
                   {category.description}
                 </p>
@@ -211,7 +211,7 @@ const SimpleHomePage = () => {
                   ))}
                 </div>
 
-                <Link 
+                <Link
                   to={`/algorithms/${category.id}`}
                   className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold group"
                 >

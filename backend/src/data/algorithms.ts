@@ -24,7 +24,7 @@ export const algorithms: Algorithm[] = [
     mark(n - i - 1, 'sorted');
   }
   return arr;
-}`
+  }`
   },
   {
     id: 'quick-sort',

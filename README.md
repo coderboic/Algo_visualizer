@@ -49,7 +49,7 @@
 
 ### 🎨 Data Structures (4 Visualizers)
 - **Array** - Insert, delete, search with O(1) access
-- **Stack** - LIFO operations with overflow detection  
+- **Stack** - LIFO operations with overflow detection
 - **Queue** - FIFO operations with front/rear pointers
 - **Linked List** - Node operations with pointer visualization
 
@@ -80,13 +80,13 @@
 
 ## 🎯 What Makes AlgoBook Special?
 
-✅ **100% SRS Compliant** - All 23 functional + 16 non-functional requirements met  
-✅ **Production Ready** - Thoroughly tested and verified  
-✅ **Modern Stack** - React 19, TypeScript, TailwindCSS  
-✅ **Smooth Animations** - 60 FPS with Framer Motion  
-✅ **Educational Focus** - Built for learning  
-✅ **Responsive Design** - Works on desktop and tablet  
-✅ **Dark Mode** - Easy on the eyes  
+✅ **100% SRS Compliant** - All 23 functional + 16 non-functional requirements met
+✅ **Production Ready** - Thoroughly tested and verified
+✅ **Modern Stack** - React 19, TypeScript, TailwindCSS
+✅ **Smooth Animations** - 60 FPS with Framer Motion
+✅ **Educational Focus** - Built for learning
+✅ **Responsive Design** - Works on desktop and tablet
+✅ **Dark Mode** - Easy on the eyes
 
 ## 🏗️ Technology Stack
 
@@ -154,7 +154,7 @@ Algo_visualizer/
 cd backend
 npm run dev
 
-# Frontend development  
+# Frontend development
 cd frontend
 npm run dev
 
@@ -233,7 +233,7 @@ Understand where algorithmic bugs might occur.
 3. Experiment with Bubble Sort
 4. Learn Linear Search
 
-### Intermediate  
+### Intermediate
 1. Master Linked List operations
 2. Compare sorting algorithms
 3. Understand Binary Search
@@ -244,6 +244,34 @@ Understand where algorithmic bugs might occur.
 2. Compare algorithm performances
 3. Experiment with edge cases
 4. Explore graph algorithms
+
+## 🚀 Deployment
+
+Ready to deploy to production? We've got you covered!
+
+### Quick Deploy (30 minutes)
+```bash
+# Check if ready for deployment
+./check-deployment.sh
+
+# Prepare for deployment
+./prepare-deployment.sh
+```
+
+### Deployment Options
+- **Frontend**: Vercel (recommended) or Netlify
+- **Backend**: Render (recommended) or Railway
+- **Database**: MongoDB Atlas (free tier available)
+
+### Documentation
+- 📖 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide
+- ⚡ **[QUICK_DEPLOYMENT.md](./QUICK_DEPLOYMENT.md)** - Fast 30-minute deployment
+
+### Free Tier Deployment
+- ✅ $0/month with Vercel + Render + MongoDB Atlas
+- ✅ Automatic HTTPS
+- ✅ Auto-deploy on git push
+- ✅ Global CDN
 
 ## 🤝 Contributing
 

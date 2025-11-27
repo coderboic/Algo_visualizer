@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { algorithmCategories, getAllAlgorithms } from '../data/algorithms';
+import { getAllAlgorithms } from '../data/algorithms';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 const SimpleVisualizerPage: React.FC = () => {
   const { algorithmId } = useParams<{ algorithmId: string }>();
   const navigate = useNavigate();
-  
+
   const [array, setArray] = useState<number[]>([64, 34, 25, 12, 22, 11, 90, 88, 45, 50]);
   const [steps, setSteps] = useState<any[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -17,9 +17,9 @@ const SimpleVisualizerPage: React.FC = () => {
   const [comparing, setComparing] = useState<number[]>([]);
   const [sorted, setSorted] = useState<number[]>([]);
   const [swapping, setSwapping] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState<string | null>(null);
+
   // Find the algorithm from local data
   const allAlgorithms = getAllAlgorithms();
   const currentAlgorithm = allAlgorithms.find(alg => alg.id === algorithmId);
@@ -27,10 +27,10 @@ const SimpleVisualizerPage: React.FC = () => {
   // Fetch visualization steps from backend
   const fetchVisualizationSteps = async () => {
     if (!algorithmId) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await axios.post(`${API_BASE_URL}/execute/algorithm`, {
         algorithmId: algorithmId,
@@ -59,7 +59,7 @@ const SimpleVisualizerPage: React.FC = () => {
     const arr = [...array];
     const localSteps: any[] = [];
     const n = arr.length;
-    
+
     for (let i = 0; i < n - 1; i++) {
       for (let j = 0; j < n - i - 1; j++) {
         // Comparing step
@@ -69,7 +69,7 @@ const SimpleVisualizerPage: React.FC = () => {
           sorted: Array.from({ length: i }, (_, idx) => n - 1 - idx),
           description: `Comparing ${arr[j]} and ${arr[j + 1]}`
         });
-        
+
         if (arr[j] > arr[j + 1]) {
           // Swapping step
           [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
@@ -82,14 +82,14 @@ const SimpleVisualizerPage: React.FC = () => {
         }
       }
     }
-    
+
     // Final sorted state
     localSteps.push({
       array: [...arr],
       sorted: Array.from({ length: n }, (_, idx) => idx),
       description: 'Array is fully sorted!'
     });
-    
+
     setSteps(localSteps);
     setCurrentStep(0);
   };
@@ -117,7 +117,7 @@ const SimpleVisualizerPage: React.FC = () => {
   // Animation effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (isPlaying && currentStep < steps.length - 1) {
       interval = setTimeout(() => {
         setCurrentStep(prev => prev + 1);
@@ -125,7 +125,7 @@ const SimpleVisualizerPage: React.FC = () => {
     } else if (currentStep >= steps.length - 1) {
       setIsPlaying(false);
     }
-    
+
     return () => clearTimeout(interval);
   }, [isPlaying, currentStep, steps.length, speed]);
 

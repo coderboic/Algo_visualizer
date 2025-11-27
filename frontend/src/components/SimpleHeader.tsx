@@ -1,13 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/slices/uiSlice';
+import { useAuth } from '../contexts/AuthContext';
+import { LogOut, User } from 'lucide-react';
 
 const SimpleHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dispatch = useAppDispatch();
   const theme = useAppSelector((state) => state.ui.theme);
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +25,7 @@ const SimpleHeader = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     dispatch(setTheme(newTheme));
     localStorage.setItem('theme', newTheme);
-    
+
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -29,10 +33,15 @@ const SimpleHeader = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg' 
+      isScrolled
+        ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg'
         : 'bg-transparent'
     }`}>
       <div className="container mx-auto px-4">
@@ -54,7 +63,7 @@ const SimpleHeader = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">Algorithm Visualizer</p>
             </div>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="nav-link">
@@ -70,7 +79,7 @@ const SimpleHeader = () => {
               Tutorials
             </Link>
           </nav>
-          
+
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Theme Toggle */}
@@ -90,10 +99,30 @@ const SimpleHeader = () => {
               )}
             </button>
 
-            {/* Get Started Button */}
-            <button className="hidden md:block btn-primary">
-              Get Started
-            </button>
+            {/* Get Started / User Profile Button */}
+            {isAuthenticated && user ? (
+              <div className="hidden md:flex items-center space-x-3 pl-4 border-l border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {user.username}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button className="hidden md:block btn-primary">
+                Get Started
+              </button>
+            )}
 
             {/* Mobile Menu Toggle */}
             <button
@@ -117,37 +146,60 @@ const SimpleHeader = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700 animate-slide-in">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Home
               </Link>
-              <Link 
-                to="/algorithms" 
+              <Link
+                to="/algorithms"
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Algorithms
               </Link>
-              <Link 
-                to="/playground" 
+              <Link
+                to="/playground"
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Playground
               </Link>
-              <Link 
-                to="/tutorials" 
+              <Link
+                to="/tutorials"
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Tutorials
               </Link>
-              <button className="btn-primary w-full">
-                Get Started
-              </button>
+              {isAuthenticated && user ? (
+                <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-2 px-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {user.username}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm font-medium"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <button className="btn-primary w-full">
+                  Get Started
+                </button>
+              )}
             </nav>
           </div>
         )}

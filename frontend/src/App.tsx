@@ -14,6 +14,10 @@ import LinkedListVisualizer from './components/Visualizers/LinkedListVisualizer'
 import SearchingVisualizer from './components/Visualizers/SearchingVisualizer';
 import { useAppDispatch } from './store/hooks';
 import { setTheme } from './store/slices/uiSlice';
+import { AuthProvider } from './contexts/AuthContext';
+import { LoginPage as AuthLoginPage } from './pages/AuthLoginPage';
+import { SignupPage as AuthSignupPage } from './pages/AuthSignupPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -46,37 +50,44 @@ function App() {
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <SimpleHeader />
-      <main className="animate-fade-in">
-        <Routes>
-          <Route path="/" element={<SimpleHomePage />} />
-          <Route path="/algorithms" element={<AlgorithmsPage />} />
-          <Route path="/algorithms/:category" element={<AlgorithmsPage />} />
-          
-          {/* Learn Routes - Documentation Pages */}
-          <Route path="/learn/:algorithmId" element={<AlgorithmLearnPage />} />
-          <Route path="/algorithm/:algorithmId" element={<AlgorithmLearnPage />} />
-          
-          {/* Data Structure Routes */}
-          <Route path="/visualizer/array" element={<ArrayVisualizer />} />
-          <Route path="/visualizer/stack" element={<StackVisualizer />} />
-          <Route path="/visualizer/queue" element={<QueueVisualizer />} />
-          <Route path="/visualizer/linked-list" element={<LinkedListVisualizer />} />
-          
-          {/* Search Algorithm Routes */}
-          <Route path="/visualizer/linear-search" element={<SearchingVisualizer />} />
-          <Route path="/visualizer/binary-search" element={<SearchingVisualizer />} />
-          <Route path="/visualizer/searching" element={<SearchingVisualizer />} />
-          
-          {/* General Routes */}
-          <Route path="/visualizer/:algorithmId" element={<VisualizerRouter />} />
-          <Route path="/playground" element={<PlaygroundPage />} />
-          <Route path="/test" element={<TestPage />} />
-          <Route path="*" element={<SimpleHomePage />} />
-        </Routes>
-      </main>
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <SimpleHeader />
+        <main className="animate-fade-in">
+          <Routes>
+            {/* Public Auth Routes - No protection */}
+            <Route path="/login" element={<AuthLoginPage />} />
+            <Route path="/signup" element={<AuthSignupPage />} />
+
+            {/* Protected Routes - Require authentication */}
+            <Route path="/" element={<ProtectedRoute><SimpleHomePage /></ProtectedRoute>} />
+            <Route path="/algorithms" element={<ProtectedRoute><AlgorithmsPage /></ProtectedRoute>} />
+            <Route path="/algorithms/:category" element={<ProtectedRoute><AlgorithmsPage /></ProtectedRoute>} />
+
+            {/* Learn Routes - Documentation Pages */}
+            <Route path="/learn/:algorithmId" element={<ProtectedRoute><AlgorithmLearnPage /></ProtectedRoute>} />
+            <Route path="/algorithm/:algorithmId" element={<ProtectedRoute><AlgorithmLearnPage /></ProtectedRoute>} />
+
+            {/* Data Structure Routes */}
+            <Route path="/visualizer/array" element={<ProtectedRoute><ArrayVisualizer /></ProtectedRoute>} />
+            <Route path="/visualizer/stack" element={<ProtectedRoute><StackVisualizer /></ProtectedRoute>} />
+            <Route path="/visualizer/queue" element={<ProtectedRoute><QueueVisualizer /></ProtectedRoute>} />
+            <Route path="/visualizer/linked-list" element={<ProtectedRoute><LinkedListVisualizer /></ProtectedRoute>} />
+
+            {/* Search Algorithm Routes */}
+            <Route path="/visualizer/linear-search" element={<ProtectedRoute><SearchingVisualizer /></ProtectedRoute>} />
+            <Route path="/visualizer/binary-search" element={<ProtectedRoute><SearchingVisualizer /></ProtectedRoute>} />
+            <Route path="/visualizer/searching" element={<ProtectedRoute><SearchingVisualizer /></ProtectedRoute>} />
+
+            {/* General Routes */}
+            <Route path="/visualizer/:algorithmId" element={<ProtectedRoute><VisualizerRouter /></ProtectedRoute>} />
+            <Route path="/playground" element={<ProtectedRoute><PlaygroundPage /></ProtectedRoute>} />
+            <Route path="/test" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
+            <Route path="*" element={<ProtectedRoute><SimpleHomePage /></ProtectedRoute>} />
+          </Routes>
+        </main>
+      </div>
+    </AuthProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { motion } from 'framer-motion';
 import {
@@ -27,7 +27,7 @@ const PlaygroundPage: React.FC = () => {
     explanation: string;
     changes: string[];
   } | null>(null);
-  
+
   const editorRef = useRef<any>(null);
 
   const handleCodeChange = (value: string | undefined) => {
@@ -137,7 +137,7 @@ const PlaygroundPage: React.FC = () => {
       cpp: 'cpp',
       typescript: 'ts',
     };
-    
+
     const blob = new Blob([code], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -156,24 +156,24 @@ function greet(name) {
 }
 
 console.log(greet("World"));`,
-      
+
       python: `# Python Code
 def greet(name):
     return f"Hello, {name}!"
 
 print(greet("World"))`,
-      
+
       java: `// Java Code
 public class Main {
     public static void main(String[] args) {
         System.out.println(greet("World"));
     }
-    
+
     public static String greet(String name) {
         return "Hello, " + name + "!";
     }
 }`,
-      
+
       cpp: `// C++ Code
 #include <iostream>
 #include <string>
@@ -195,7 +195,7 @@ function greet(name: string): string {
 
 console.log(greet("World"));`,
     };
-    
+
     return templates[lang] || templates.javascript;
   }
 
@@ -214,7 +214,7 @@ console.log(greet("World"));`,
               <Code2 className="mr-2 h-5 w-5" />
               Code Playground
             </h1>
-            
+
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}

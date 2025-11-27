@@ -32,6 +32,9 @@ class SocketManager {
     this.io.on('connection', (socket: Socket) => {
       console.log(`👤 User connected: ${socket.id}`);
 
+      // Track if user has logged disconnect message
+      let disconnectLogged = false;
+
       // Join visualization room
       socket.on('join-room', (data: { roomId: string; userId: string; username: string }) => {
         const { roomId, userId, username } = data;
@@ -117,54 +120,12 @@ class SocketManager {
         }
       });
 
-      // Code execution
-      socket.on('code-execute', (data: { roomId: string; code: string; input: any }) => {
-        // Broadcast to others in the room
-        socket.to(data.roomId).emit('code-execution-started', {
-          userId: socket.id,
-          code: data.code,
-        });
-      });
-
-      socket.on('code-result', (data: { roomId: string; result: any; error?: string }) => {
-        // Broadcast execution result to room
-        this.io?.to(data.roomId).emit('code-execution-result', {
-          userId: socket.id,
-          result: data.result,
-          error: data.error,
-        });
-      });
-
-      // Chat messages
-      socket.on('chat-message', (data: { roomId: string; message: string; username: string }) => {
-        this.io?.to(data.roomId).emit('chat-message', {
-          userId: socket.id,
-          username: data.username,
-          message: data.message,
-          timestamp: new Date().toISOString(),
-        });
-      });
-
-      // Cursor tracking for collaborative editing
-      socket.on('cursor-position', (data: { roomId: string; position: any }) => {
-        socket.to(data.roomId).emit('cursor-update', {
-          userId: socket.id,
-          position: data.position,
-        });
-      });
-
-      // Code changes for collaborative editing
-      socket.on('code-change', (data: { roomId: string; code: string; changes: any }) => {
-        socket.to(data.roomId).emit('code-update', {
-          userId: socket.id,
-          code: data.code,
-          changes: data.changes,
-        });
-      });
-
       // Handle disconnect
       socket.on('disconnect', () => {
-        console.log(`👤 User disconnected: ${socket.id}`);
+        if (!disconnectLogged) {
+          console.log(`👤 User disconnected: ${socket.id}`);
+          disconnectLogged = true;
+        }
         // Clean up from all rooms
         this.rooms.forEach((room, roomId) => {
           if (room.participants.has(socket.id)) {
@@ -180,7 +141,7 @@ class SocketManager {
     if (room && room.participants.has(socket.id)) {
       const user = room.participants.get(socket.id);
       room.participants.delete(socket.id);
-      
+
       socket.leave(roomId);
       socket.to(roomId).emit('user-left', {
         userId: user?.userId,

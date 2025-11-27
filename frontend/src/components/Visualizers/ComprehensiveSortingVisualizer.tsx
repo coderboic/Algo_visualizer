@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, SkipForward, SkipBack, Settings } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, SkipBack } from 'lucide-react';
 
 interface VisualizationStep {
   type: string;
@@ -30,7 +30,6 @@ export const ComprehensiveSortingVisualizer: React.FC<ComprehensiveSortingVisual
   const [speed, setSpeed] = useState(500); // milliseconds
   const [arraySize, setArraySize] = useState(20);
   const [maxValue, setMaxValue] = useState(100);
-  const animationRef = useRef<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Generate random array
