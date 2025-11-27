@@ -42,7 +42,7 @@ const PlaygroundPage: React.FC = () => {
     setIsExecuting(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/playground/execute', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/playground/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,7 +83,7 @@ const PlaygroundPage: React.FC = () => {
     toast.loading('AI is analyzing your code...', { id: 'ai-fix' });
 
     try {
-      const response = await fetch('http://localhost:5000/api/playground/fix', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/playground/fix`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

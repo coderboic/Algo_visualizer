@@ -97,7 +97,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
 
     try {
       // Send nodes and edges directly to backend
-      const response = await fetch('http://localhost:5000/api/execute/algorithm', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/execute/algorithm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
