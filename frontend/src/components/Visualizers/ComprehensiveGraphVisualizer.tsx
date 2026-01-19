@@ -187,7 +187,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const currentStepData = steps[currentStep];
-    
+
     // Use nodes and edges from step data if available, otherwise use initial state
     const displayNodes = currentStepData?.nodes || nodes;
     const displayEdges = currentStepData?.edges || edges;
@@ -230,7 +230,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
       // Node circle
       ctx.beginPath();
       ctx.arc(node.x, node.y, 25, 0, 2 * Math.PI);
-      
+
       if (isCurrent) {
         ctx.fillStyle = '#ef4444'; // Red for current
       } else if (inPath) {
@@ -240,7 +240,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
       } else {
         ctx.fillStyle = '#6b7280'; // Gray for unvisited
       }
-      
+
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3;
@@ -295,7 +295,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
         <p className="text-sm mb-2">
           {currentStepData?.description || 'Click "Start" to begin visualization'}
         </p>
-        
+
         {currentStepData && (
           <div className="flex flex-wrap gap-4 text-xs mt-2">
             {currentStepData.queue && currentStepData.queue.length > 0 && (
@@ -335,7 +335,7 @@ export const ComprehensiveGraphVisualizer: React.FC<ComprehensiveGraphVisualizer
               ))}
             </select>
           </div>
-          
+
           {algorithmId.includes('dijkstra') && (
             <div className="flex-1">
               <label className="block text-xs font-medium mb-1">End Node</label>
