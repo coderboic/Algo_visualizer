@@ -2,6 +2,8 @@
 
 > Interactive web platform for visualizing algorithms and data structures through step-by-step animations.
 
+🔗 **Live Demo**: [algo-visualizer-alpha-nine.vercel.app](https://algo-visualizer-alpha-nine.vercel.app)
+
 ## 🎯 Quick Start
 
 ```bash
